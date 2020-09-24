@@ -26,7 +26,7 @@
                 :key="`${item.id}-${item.name}`"
               />
             </div>
-            <h3 v-else>No Residents</h3>
+            <h3 class="no-residents" v-else>No Residents</h3>
           </div>
           <div class="errors resident-error" v-else>There was an error fetching Residents</div>
         </div>

@@ -2,16 +2,8 @@ import Home from '@/views/Home.vue'
 import { RouterLinkStub, mount } from '@vue/test-utils'
 import mockAxios from 'axios'
 import { locations } from '../samples/locations'
+import { character } from '../samples/character'
 import flushPromises from 'flush-promises'
-
-const mocks = {
-  $router: {
-    push: jest.fn(() => Promise.resolve())
-  },
-  console: {
-    error: jest.fn(() => Promise.resolve())
-  }
-}
 
 beforeAll(() => {
   console.error = jest.fn()
@@ -23,8 +15,7 @@ describe('Home Component', () => {
     const wrapper = mount(Home, {
       stubs: {
         'router-link': RouterLinkStub
-      },
-      mocks
+      }
     })
     const vm = wrapper.vm
     await flushPromises()
@@ -37,36 +28,56 @@ describe('Home Component', () => {
     const wrapper = mount(Home, {
       stubs: {
         'router-link': RouterLinkStub
-      },
-      mocks
+      }
     })
     const vm = wrapper.vm
     await flushPromises()
     expect(vm.error).toBeTruthy()
     expect(wrapper.find('.location-error')).toBeTruthy()
   })
+})
 
-  test('should call fetch character API same number as characters in location', async () => {
+describe('test residents', () => {
+  let wrapper
+  beforeEach(async () => {
     mockAxios.mockResolvedValue({ data: locations })
-    const wrapper = mount(Home, {
+    wrapper = mount(Home, {
       stubs: {
         'router-link': RouterLinkStub
-      },
-      mocks
+      }
     })
-    const vm = wrapper.vm
     await flushPromises()
     jest.clearAllMocks()
-    wrapper
-      .findAll('.location')
-      .at(0)
-      .trigger('click')
+  })
+
+  test('should call fetch character API same number as characters in location', async () => {
+    mockAxios.mockResolvedValue({ data: character })
+    const firstLocation = wrapper.findAll('.location').at(0)
+    firstLocation.trigger('click')
+    expect(wrapper.vm.loading).toBeTruthy()
     await flushPromises()
-    expect(
-      wrapper
-        .findAll('.location')
-        .at(0)
-        .classes()
-    ).toContain('active')
+    expect(wrapper.vm.loading).toBeFalsy()
+    expect(wrapper.find('.location-info h3').text()).toContain(locations.results[0].name)
+    expect(firstLocation.classes()).toContain('active')
+    expect(mockAxios).toBeCalledTimes(locations.results[0].residents.length)
+    expect(wrapper.findAll('.character-container').length).toBe(
+      locations.results[0].residents.length
+    )
+  })
+
+  test('should show error when character API fails', async () => {
+    mockAxios.mockRejectedValue()
+    const firstLocation = wrapper.findAll('.location').at(0)
+    firstLocation.trigger('click')
+    await flushPromises()
+    expect(wrapper.vm.residentError).toBeTruthy()
+    expect(wrapper.find('.resident-error').text()).toBe('There was an error fetching Residents')
+  })
+
+  test('should show no residents when location with no residents clicked', async () => {
+    const noResidentsLocation = wrapper.findAll('.location').at(4)
+    noResidentsLocation.trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.no-residents')).toBeTruthy()
   })
 })

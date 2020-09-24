@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="loading" v-if="loading">Loading...</div>
-    <div v-else-if="!error">
+    <div v-else-if="!error && character">
       <div class="character page-character">
         <div class="image">
           <img :src="character.image" :alt="character.name" />
@@ -26,7 +26,7 @@
         </ol>
       </div>
     </div>
-    <div class="error" v-else>There was a problem while fetching character</div>
+    <div class="character-error error" v-else>There was a problem while fetching character</div>
     <router-link to="/" class="go-to">Go to Locations</router-link>
   </div>
 </template>
